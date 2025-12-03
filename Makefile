@@ -11,7 +11,7 @@ run_workflow_test:
 	act --workflows $(TEST) --platform $(PLATFORM) --env $(ENV) --artifact-server-path $(ARTIFACT)
 run_workflow_doc:
 	act --workflows $(DOCS) --platform $(PLATFORM) --secret $(SECRET) --artifact-server-path $(ARTIFACT)
-# Now working because of a bug in act
+# Not working because of a bug in act
 #run_workflow_gds:
 #	act --workflows $(GDS) --platform $(PLATFORM) --env $(ENV) --artifact-server-path $(ARTIFACT)
 
