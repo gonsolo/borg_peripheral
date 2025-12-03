@@ -17,8 +17,10 @@ run_workflow_doc:
 
 generate_verilog:
 	sbt "runMain tinygpu.Main"
-test: #generate_verilog
+test: generate_verilog just_test
+just_test:
 	make -C test
 nix:
-	nix-shell --pure
-.PHONY: all generate_verilog nix run_workflow_test run_workflow_doc test
+	nix-shell --pure --run 'make -C test'
+
+.PHONY: all generate_verilog just_test nix run_workflow_test run_workflow_doc test
