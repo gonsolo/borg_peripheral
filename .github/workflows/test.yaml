@@ -13,7 +13,19 @@ jobs:
         shell: bash
         run: sudo apt-get update && sudo apt-get install -y iverilog
 
-      # Set Python up and install cocotb
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - name: Setup sbt launcher
+        uses: sbt/setup-sbt@v1
+
+      - name: Generate SystemVerilog
+        shell: bash
+        run: make generate_verilog
+
       - name: Setup python
         uses: actions/setup-python@v5
         with:
