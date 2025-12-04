@@ -7,22 +7,15 @@ PLATFORM=ubuntu-24.04=-self-hosted
 ENV=ACTIONS_RUNTIME_TOKEN=12345
 ARTIFACT=/tmp/artifacts
 
-all: test
-#run_workflow_test:
-#	act --workflows $(TEST) --platform $(PLATFORM) --env $(ENV) --artifact-server-path $(ARTIFACT)
-#run_workflow_doc:
-#	act --workflows $(DOCS) --platform $(PLATFORM) --env $(ENV) --artifact-server-path $(ARTIFACT)
-# Not working because of a bug in act
-#run_workflow_gds:
-#	act --workflows $(GDS) --platform $(PLATFORM) --env $(ENV) --artifact-server-path $(ARTIFACT)
-docs:
-	tt/tt_tool.py  --create-pdf
+all: test docs
 generate_verilog:
 	sbt "runMain tinygpu.Main"
-test: generate_verilog just_test
 just_test:
 	make -C test
+test: generate_verilog just_test
+docs:
+	tt/tt_tool.py  --create-pdf
 nix:
-	nix-shell --pure --run 'make -C test'
+	nix-shell --pure --run 'make all'
 
 .PHONY: all docs generate_verilog just_test nix test
