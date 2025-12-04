@@ -16,6 +16,6 @@ test: generate_verilog just_test
 docs:
 	tt/tt_tool.py  --create-pdf
 nix:
-	nix-shell --pure --run 'make all'
+	nix-shell --pure --run 'make docs'
 
 .PHONY: all docs generate_verilog just_test nix test
