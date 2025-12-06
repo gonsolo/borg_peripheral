@@ -14,8 +14,8 @@ just_test:
 	make -C test
 test: generate_verilog just_test
 docs:
-	tt/tt_tool.py  --create-pdf
+	python3 tt/tt_tool.py  --create-pdf
 nix:
-	nix-shell --pure --run 'make docs'
+	nix develop --command make all
 
-.PHONY: all docs generate_verilog just_test nix test
+.PHONY: all docs generate_verilog just_test test docs nix
