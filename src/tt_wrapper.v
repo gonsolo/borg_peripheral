@@ -52,7 +52,7 @@ module tt_um_tqv_peripheral_harness (
   //  .user_interrupt(user_interrupt)
   //);
 
-  TinyGPU user_peripheral(
+  Borg user_peripheral(
     .clock(clk),
     .reset(!rst_reg_n),
     .io_ui_in(ui_in_sync),

@@ -1,7 +1,7 @@
 // Copyright Andreas Wendleder 2025
 // CERN-OHL-S-2.0
   
-package tinygpu
+package borg
 
 import chisel3._
 import chisel3.util.{MuxCase, Cat}
@@ -14,7 +14,7 @@ object Globals {
   val sigWidth = 11
 }
 
-class TinyGPU extends Module {
+class Borg extends Module {
   val io = IO(new Bundle {
     val ui_in = Input(UInt(8.W))
     val uo_out = Output(UInt(8.W))
@@ -101,5 +101,5 @@ object Main extends App {
     )
   }
 
-  emitModule(new TinyGPU())
+  emitModule(new Borg())
 }

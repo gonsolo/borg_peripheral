@@ -17,3 +17,5 @@ test/gate_level_netlist.v
 /output
 /tags
 /datasheet.pdf
+/out
+/generated

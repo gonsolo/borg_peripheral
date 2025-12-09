@@ -29,12 +29,13 @@
   in {
     devShells.${system}.default = pkgs.mkShell {
       buildInputs = [
-        pkgs.gnumake
         pkgs.bash-completion
-        pkgs.jdk25
-        pkgs.sbt
+        pkgs.bzip2
         pkgs.cmake
+        pkgs.gnumake
         pkgs.iverilog
+        pkgs.jdk25
+        pkgs.mill
         pythonEnv
       ];
 
