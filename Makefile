@@ -7,7 +7,7 @@ generate_verilog:
 tt_test_only:
 	make -C test
 tt_test: generate_verilog tt_test_only
-tt_docs:
+tt_docs: generate_verilog
 	python tt/tt_tool.py  --create-pdf
 nix:
 	nix develop --command make all

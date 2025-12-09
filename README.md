@@ -4,16 +4,16 @@
 
 ## Working
 
-* Integer addition in Chisel
+* Chisel integer addition
 * Test integer addition
-# Generated docs for Tinytapeout
+* TT test
+* TT docs
 
 ## TODO
 
-* Floating point addition in Chisel plus test
-* Floating point multiplication in Chisel plus test
-* Tinytapeout test
 * Tinytapeout gds
+* Chisel floating point addition + test
+* Chisel floating point multiplication + test
 
 ## TODO later
 
