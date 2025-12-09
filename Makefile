@@ -10,4 +10,5 @@ nix:
 	nix develop --command make all
 clean:
 	rm -f src/*.sv
+	git clean -dfx
 .PHONY: all clean docs generate_verilog just_test test docs nix

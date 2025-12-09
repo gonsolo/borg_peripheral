@@ -7,7 +7,6 @@ import utest._
 object BorgTests extends TestSuite {
   val tests = Tests {
     test("borg") {
-      println("bla test bla")
       simulate(new Borg) { borg =>
         // TODO
       }
