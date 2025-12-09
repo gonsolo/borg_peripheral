@@ -20,62 +20,68 @@ class Borg extends Module {
     val user_interrupt = Output(Bool())
   })
 
-  val example_data = RegInit(0.U(32.W))
+  io.data_out := io.data_in
 
-  val next_example_data = MuxCase(example_data, Seq(
-    // 32-bit write, highest priority
-    (io.address === "h0".U && io.data_write_n === "b10".U) -> io.data_in,
-    // 16-bit write
-    (io.address === "h0".U && io.data_write_n === "b01".U) -> Cat(example_data(31, 16), io.data_in(15, 0)),
-    // 8-bit write
-    (io.address === "h0".U && io.data_write_n === "b00".U) -> Cat(example_data(31, 8), io.data_in(7, 0))
-  ))
+  io.uo_out := DontCare
+  io.data_ready := DontCare
+  io.user_interrupt := DontCare
 
-  // Assign the next state to the register on the clock edge.
-  example_data := next_example_data
+  //val example_data = RegInit(0.U(32.W))
 
-  io.uo_out := example_data(7, 0) + io.ui_in
+  //val next_example_data = MuxCase(example_data, Seq(
+  //  // 32-bit write, highest priority
+  //  (io.address === "h0".U && io.data_write_n === "b10".U) -> io.data_in,
+  //  // 16-bit write
+  //  (io.address === "h0".U && io.data_write_n === "b01".U) -> Cat(example_data(31, 16), io.data_in(15, 0)),
+  //  // 8-bit write
+  //  (io.address === "h0".U && io.data_write_n === "b00".U) -> Cat(example_data(31, 8), io.data_in(7, 0))
+  //))
 
-  io.data_ready := true.B
+  //// Assign the next state to the register on the clock edge.
+  //example_data := next_example_data
 
-  val example_interrupt = RegInit(false.B)
-  val last_ui_in_6 = RegInit(false.B)
+  //io.uo_out := example_data(7, 0) + io.ui_in
 
-  when(io.ui_in(6) && !last_ui_in_6) {
-    example_interrupt := true.B
-  }.elsewhen(io.address === "h8".U && io.data_write_n =/= "b11".U && io.data_in(0) === 1.U) {
-    example_interrupt := false.B
-  }
+  //io.data_ready := true.B
 
-  last_ui_in_6 := io.ui_in(6)
+  //val example_interrupt = RegInit(false.B)
+  //val last_ui_in_6 = RegInit(false.B)
 
-  io.user_interrupt := example_interrupt
+  //when(io.ui_in(6) && !last_ui_in_6) {
+  //  example_interrupt := true.B
+  //}.elsewhen(io.address === "h8".U && io.data_write_n =/= "b11".U && io.data_in(0) === 1.U) {
+  //  example_interrupt := false.B
+  //}
 
-  // Adder
-  val add_a = RegInit(0.U((Globals.expWidth + Globals.sigWidth).W))
-  val add_b = RegInit(0.U((Globals.expWidth + Globals.sigWidth).W))
-  add_a := example_data(31, 16)
-  add_b := example_data(15, 0)
-  val roundingMode = RegInit(consts.round_near_even)
-  val detectTininess = RegInit(false.B)
+  //last_ui_in_6 := io.ui_in(6)
 
-  val addRecFN = Module(new AddRecFN(Globals.expWidth, Globals.sigWidth))
-  addRecFN.io.subOp := false.B
-  addRecFN.io.a := recFNFromFN(Globals.expWidth, Globals.sigWidth, add_a)
-  addRecFN.io.b := recFNFromFN(Globals.expWidth, Globals.sigWidth, add_b)
-  addRecFN.io.roundingMode   := roundingMode
-  addRecFN.io.detectTininess := detectTininess
+  //io.user_interrupt := example_interrupt
 
-  val add_result = RegInit(0.U((Globals.expWidth + Globals.sigWidth).W))
-  add_result := addRecFN.io.out
+  //// Adder
+  //val add_a = RegInit(0.U((Globals.expWidth + Globals.sigWidth).W))
+  //val add_b = RegInit(0.U((Globals.expWidth + Globals.sigWidth).W))
+  //add_a := example_data(31, 16)
+  //add_b := example_data(15, 0)
+  //val roundingMode = RegInit(consts.round_near_even)
+  //val detectTininess = RegInit(false.B)
 
-  // Address 0 reads the example data register.
-  // Address 4 reads ui_in.
-  // All other addresses read 0.
-  io.data_out := MuxCase(0.U, Seq(
-    (io.address === "h0".U) -> example_data,
-    (io.address === "h4".U) -> io.ui_in.pad(32),
-    (io.address === "h8".U) -> Cat(add_result, 0.U(16.W))
-  ))
+  //val addRecFN = Module(new AddRecFN(Globals.expWidth, Globals.sigWidth))
+  //addRecFN.io.subOp := false.B
+  //addRecFN.io.a := recFNFromFN(Globals.expWidth, Globals.sigWidth, add_a)
+  //addRecFN.io.b := recFNFromFN(Globals.expWidth, Globals.sigWidth, add_b)
+  //addRecFN.io.roundingMode   := roundingMode
+  //addRecFN.io.detectTininess := detectTininess
+
+  //val add_result = RegInit(0.U((Globals.expWidth + Globals.sigWidth).W))
+  //add_result := addRecFN.io.out
+
+  //// Address 0 reads the example data register.
+  //// Address 4 reads ui_in.
+  //// All other addresses read 0.
+  //io.data_out := MuxCase(0.U, Seq(
+  //  (io.address === "h0".U) -> example_data,
+  //  (io.address === "h4".U) -> io.ui_in.pad(32),
+  //  (io.address === "h8".U) -> Cat(add_result, 0.U(16.W))
+  //))
 }
 
