@@ -5,13 +5,14 @@
 ## Working
 
 * Chisel integer addition
-* Test integer addition
-* TT test
-* TT docs
+* Mill test
+* TT test locally and Github
+* TT docs locally and Github
+* TT gds Githb
 
 ## TODO
 
-* Tinytapeout gds
+* TT gds locally
 * Chisel floating point addition + test
 * Chisel floating point multiplication + test
 
@@ -20,9 +21,7 @@
 * Pull request for ttsky25a-tinyQV
 * Test there
 * When pico-ice arrives: FPGA testing
-* Generate GDS
 * Submit for next shuttle
 
 ~~Right now, it's just a floating point adder wired up to the example project.
 With a 1x2 tile configuration, utilization is 39.9%.~~
-
