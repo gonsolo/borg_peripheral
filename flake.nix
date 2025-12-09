@@ -23,6 +23,7 @@
       p.pip
       p.pyaml
       p.requests
+      p.pytest
 
       pkgs.python3Packages.gdstk
     ]);
