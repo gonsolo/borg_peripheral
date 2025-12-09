@@ -22,9 +22,6 @@ class Borg extends Module {
 
   val example_data = RegInit(0.U(32.W))
 
-  // Refactored write logic to use a MuxCase, which is the idiomatic
-  // way to handle mutually exclusive assignments and prevent
-  // multi-driver errors in Chisel.
   val next_example_data = MuxCase(example_data, Seq(
     // 32-bit write, highest priority
     (io.address === "h0".U && io.data_write_n === "b10".U) -> io.data_in,
@@ -39,10 +36,8 @@ class Borg extends Module {
 
   io.uo_out := example_data(7, 0) + io.ui_in
 
-  // All reads complete in 1 clock
   io.data_ready := true.B
 
-  // User interrupt is generated on rising edge of ui_in[6], and cleared by writing a 1 to the low bit of address 8.
   val example_interrupt = RegInit(false.B)
   val last_ui_in_6 = RegInit(false.B)
 
