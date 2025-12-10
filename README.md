@@ -8,11 +8,10 @@
 * Mill test
 * TT test locally and Github
 * TT docs locally and Github
-* TT gds Githb
+* TT gds locally and Github
 
 ## TODO
 
-* TT gds locally
 * Chisel floating point addition + test
 * Chisel floating point multiplication + test
 
