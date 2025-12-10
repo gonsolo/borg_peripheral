@@ -4,16 +4,15 @@
 
 ## Working
 
-* Chisel integer addition
 * Mill test (Arch, Nix)
 * TT test, docs (Arch, Github, Nix)
 * TT gds (Arch, Github)
+* Chisel floating point addition + test
 
 ## TODO
 
-* TT gds (Nix - librelane & ciel missing)
-* Chisel floating point addition + test
 * Chisel floating point multiplication + test
+* TT gds (Nix - librelane & ciel missing)
 * Pull request for ttsky25a-tinyQV
 * Test there
 * When pico-ice arrives: FPGA testing
