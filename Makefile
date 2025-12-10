@@ -17,7 +17,6 @@ tt_gds:
 nix:
 	nix develop --command make all
 clean:
-	rm -f src/*.sv
 	git clean -dfx
 .PHONY: all borg_test clean generate_verilog just_test test tt_docs tt_gds tt_test tt_test_only \
 	docs nix
