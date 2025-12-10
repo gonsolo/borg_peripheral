@@ -30,20 +30,20 @@ jobs:
         run: make generate_verilog
 
       - name: Build GDS
-        uses: TinyTapeout/tt-gds-action@ttsky25a
+        uses: TinyTapeout/tt-gds-action@ttihp26a
         with:
-          pdk: sky130
-          tools-ref: ttsky25a
+          pdk: ihp-sg13g2
+          tools-ref: ttihp26a
 
   precheck:
     needs: gds
     runs-on: ubuntu-24.04
     steps:
       - name: Run Tiny Tapeout Precheck
-        uses: TinyTapeout/tt-gds-action/precheck@ttsky25a
+        uses: TinyTapeout/tt-gds-action/precheck@ttihp26a
         with:
-          pdk: sky130
-          tools-ref: ttsky25a
+          pdk: ihp-sg13g2
+          tools-ref: ttihp26a
 
   gl_test:
     needs: gds
@@ -55,9 +55,9 @@ jobs:
           submodules: recursive
 
       - name: GL test
-        uses: TinyTapeout/tt-gds-action/gl_test@ttsky25a
+        uses: TinyTapeout/tt-gds-action/gl_test@ttihp26a
         with:
-          pdk: sky130
+          pdk: ihp-sg13g2
 
   viewer:
     needs: gds
@@ -66,6 +66,6 @@ jobs:
       pages: write      # to deploy to Pages
       id-token: write   # to verify the deployment originates from an appropriate source
     steps:
-      - uses: TinyTapeout/tt-gds-action/viewer@ttsky25a
+      - uses: TinyTapeout/tt-gds-action/viewer@ttihp26a
         with:
-          pdk: sky130
+          pdk: ihp-sg13g2
