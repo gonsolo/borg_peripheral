@@ -26,8 +26,5 @@ trait Borg extends ScalaModule {
   )
 }
 
-object hardfloat extends Borg {}
-
 object borg extends Borg {
-  def moduleDeps = Seq(hardfloat)
 }

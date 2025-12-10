@@ -4,11 +4,8 @@
 package borg
 
 import chisel3._
-import chisel3.util.{MuxCase, Cat}
-import hardfloat._
-
-import chisel3._
-import chisel3.util._
+import chisel3.util.MuxLookup
+//import hardfloat._
 
 class Borg extends Module {
     val io = IO(new Bundle {
@@ -23,8 +20,8 @@ class Borg extends Module {
         val user_interrupt = Output(Bool())
     })
 
-    val operand_A = RegInit(0.U(32.W))
-    val operand_B = RegInit(0.U(32.W))
+    val operand_A_bits = RegInit(0.U(32.W))
+    val operand_B_bits = RegInit(0.U(32.W))
 
     val ADDR_A = 0.U(6.W)
     val ADDR_B = 4.U(6.W)
@@ -34,24 +31,34 @@ class Borg extends Module {
 
     when (is_write) {
         when (io.address === ADDR_A) {
-            operand_A := io.data_in
+            operand_A_bits := io.data_in
         }
         .elsewhen (io.address === ADDR_B) {
-            operand_B := io.data_in
+            operand_B_bits := io.data_in
         }
     }
 
-    val sum = operand_A + operand_B
+    val recFN_A = recFNFromFN(Globals.expWidth, Globals.sigWidth, operand_A_bits)
+    val recFN_B = recFNFromFN(Globals.expWidth, Globals.sigWidth, operand_B_bits)
+    
+    val float_adder = Module(new AddRecFN(Globals.expWidth, Globals.sigWidth))
 
-    io.data_out := MuxLookup(io.address, 0.U) (Seq(
-      ADDR_A      -> operand_A,
-      ADDR_B      -> operand_B,
-      ADDR_RESULT -> sum
+    float_adder.io.a := recFN_A
+    float_adder.io.b := recFN_B
+    float_adder.io.subOp := false.B 
+    float_adder.io.roundingMode := borg.consts.round_near_even
+    float_adder.io.detectTininess := borg.consts.tininess_afterRounding
+
+    val result_recFN = float_adder.io.out
+    val result_bits = fNFromRecFN(Globals.expWidth, Globals.sigWidth, result_recFN)
+
+    io.data_out := MuxLookup(io.address, 0.U(32.W)) (Seq(
+      ADDR_A      -> operand_A_bits,
+      ADDR_B      -> operand_B_bits,
+      ADDR_RESULT -> result_bits // Output the 32-bit result
     ))
 
     io.data_ready := true.B
-
     io.uo_out := DontCare
     io.user_interrupt := false.B
 }
-

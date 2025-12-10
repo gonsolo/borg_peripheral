@@ -7,9 +7,29 @@ from cocotb.triggers import ClockCycles
 
 def get_int(value):
     if cocotb.__version__.startswith("2."):
-        return value.to_unsigned()
+        # Get the string representation of the LogicArray
+        value_str = str(value)
+
+        # Convert to lowercase to check for both 'X'/'x' and 'Z'/'z'
+        lower_str = value_str.lower()
+
+        # Check if the value contains any non-binary characters
+        if 'x' in lower_str or 'z' in lower_str:
+            # Replace all non-binary characters with '0' for safe int conversion
+            clean_binstr = lower_str.replace('x', '0').replace('z', '0')
+            return int(clean_binstr, 2)
+        else:
+            # If the value is clean (only 0s and 1s), use the standard cocotb method
+            return value.to_unsigned()
     else:
+        # For cocotb 1.x
         return value
+
+#def get_int(value):
+#    if cocotb.__version__.startswith("2."):
+#        return value.to_unsigned()
+#    else:
+#        return value
 
 def get_bit(value, bit_index):
   temp = value & (1 << bit_index)

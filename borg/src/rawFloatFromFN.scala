@@ -5,7 +5,7 @@ This Chisel source file is part of a pre-release version of the HardFloat IEEE
 Floating-Point Arithmetic Package, by John R. Hauser (with some contributions
 from Yunsup Lee and Andrew Waterman, mainly concerning testing).
 
-Copyright 2010, 2011, 2012, 2013, 2014, 2015, 2016 The Regents of the
+Copyright 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 The Regents of the
 University of California.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -35,20 +35,40 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =============================================================================*/
 
-package hardfloat
+package borg
 
 import chisel3._
 
-object recFNFromFN
-{
-    def apply(expWidth: Int, sigWidth: Int, in: Bits) =
-    {
-        val rawIn = rawFloatFromFN(expWidth, sigWidth, in)
-        rawIn.sign ##
-          (Mux(rawIn.isZero, 0.U(3.W), rawIn.sExp(expWidth, expWidth - 2)) |
-                Mux(rawIn.isNaN, 1.U, 0.U)) ##
-            rawIn.sExp(expWidth - 3, 0) ##
-            rawIn.sig(sigWidth - 2, 0)
-    }
+object rawFloatFromFN {
+  def apply(expWidth: Int, sigWidth: Int, in: Bits) = {
+    val sign = in(expWidth + sigWidth - 1)
+    val expIn = in(expWidth + sigWidth - 2, sigWidth - 1)
+    val fractIn = in(sigWidth - 2, 0)
+
+    val isZeroExpIn = (expIn === 0.U)
+    val isZeroFractIn = (fractIn === 0.U)
+
+    val normDist = countLeadingZeros(fractIn)
+    val subnormFract = (fractIn << normDist) (sigWidth - 3, 0) << 1
+    val adjustedExp =
+      Mux(isZeroExpIn,
+        normDist ^ ((BigInt(1) << (expWidth + 1)) - 1).U,
+        expIn
+      ) + ((BigInt(1) << (expWidth - 1)).U
+        | Mux(isZeroExpIn, 2.U, 1.U))
+
+    val isZero = isZeroExpIn && isZeroFractIn
+    val isSpecial = adjustedExp(expWidth, expWidth - 1) === 3.U
+
+    val out = Wire(new RawFloat(expWidth, sigWidth))
+    out.isNaN := isSpecial && !isZeroFractIn
+    out.isInf := isSpecial && isZeroFractIn
+    out.isZero := isZero
+    out.sign := sign
+    out.sExp := adjustedExp(expWidth, 0).zext
+    out.sig :=
+      0.U(1.W) ## !isZero ## Mux(isZeroExpIn, subnormFract, fractIn)
+    out
+  }
 }
 

@@ -5,7 +5,6 @@ borg_test:
 	mill borg.test
 generate_verilog:
 	mill borg.run
-	mill hardfloat.run
 tt_test_only:
 	make -C test
 tt_test: generate_verilog tt_test_only

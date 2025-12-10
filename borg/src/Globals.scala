@@ -4,8 +4,8 @@
 package borg
 
 object Globals {
-  // FP16: exp = 5, sig = 11
-  val expWidth = 5
-  val sigWidth = 11
+  // 32 bit floating point
+  val expWidth = 8
+  val sigWidth = 24 // including implicit 1
 }
 
