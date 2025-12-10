@@ -1,3 +1,5 @@
+TT_TOOL=python tt/tt_tool.py
+
 all: borg_test tt_test tt_docs
 borg_test:
 	mill borg.test
@@ -8,9 +10,10 @@ tt_test_only:
 	make -C test
 tt_test: generate_verilog tt_test_only
 tt_docs: generate_verilog
-	python tt/tt_tool.py  --create-pdf
+	$(TT_TOOL) --create-pdf
 tt_gds:
-	python tt/tt_tool.py --create-user-config --ihp
+	$(TT_TOOL) --create-user-config --ihp
+	$(TT_TOOL) --harden --ihp
 nix:
 	nix develop --command make all
 clean:
