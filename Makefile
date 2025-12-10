@@ -1,6 +1,6 @@
 TT_TOOL=python tt/tt_tool.py
 
-all: borg_test tt_test tt_docs # tt_gds
+all: borg_test tt_test tt_docs tt_gds
 borg_test:
 	mill borg.test
 generate_verilog:

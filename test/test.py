@@ -78,6 +78,9 @@ async def test_floating_point_adder(dut): # Renamed function
     # Log the actual result from the hardware
     dut._log.info(f"Actual Sum Read (FP32 bits): 0x{ACTUAL_SUM_BITS:08x}")
     
+    ACTUAL_SUM_FLOAT = ieee_bits_to_float(ACTUAL_SUM_BITS)
+    dut._log.info(f"Actual Sum Read (Float) for precision test: {ACTUAL_SUM_FLOAT}") #
+
     # Check the result bit-for-bit against the expected 32-bit pattern
     assert ACTUAL_SUM_BITS == EXPECTED_SUM_BITS, \
         f"Addition failed: Expected bit pattern 0x{EXPECTED_SUM_BITS:08x}, " \
