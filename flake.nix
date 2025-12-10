@@ -1,6 +1,7 @@
 {
   inputs = {
-    nixpkgs.url = "github:eljamm/nixpkgs/init/gdstk";
+    # The commit when libgdstk was merged
+    nixpkgs.url = "github:NixOS/nixpkgs/240062ab";
     alejandra.url = "github:kamadorueda/alejandra/4.0.0";
   };
 
