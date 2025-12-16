@@ -17,5 +17,7 @@ nix:
 	nix develop --command make borg_test tt_test tt_docs #tt_gds
 clean:
 	git clean -dfx
-.PHONY: all borg_test clean generate_verilog just_test test tt_docs tt_gds tt_test tt_test_only \
-	docs nix
+print_stats:
+	./tt/tt_tool.py --print-stats
+.PHONY: all borg_test clean docs generate_verilog just_test nix print_stats test tt_docs tt_gds \
+	tt_test tt_test_only
