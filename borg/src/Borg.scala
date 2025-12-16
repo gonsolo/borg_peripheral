@@ -5,7 +5,6 @@ package borg
 
 import chisel3._
 import chisel3.util.MuxLookup
-//import hardfloat._
 
 class Borg extends Module {
     val io = IO(new Bundle {
@@ -55,7 +54,7 @@ class Borg extends Module {
     io.data_out := MuxLookup(io.address, 0.U(32.W)) (Seq(
       ADDR_A      -> operand_A_bits,
       ADDR_B      -> operand_B_bits,
-      ADDR_RESULT -> result_bits // Output the 32-bit result
+      ADDR_RESULT -> result_bits
     ))
 
     io.data_ready := true.B

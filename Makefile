@@ -14,7 +14,7 @@ tt_gds:
 	$(TT_TOOL) --create-user-config --ihp
 	$(TT_TOOL) --harden --ihp
 nix:
-	nix develop --command make all
+	nix develop --command make borg_test tt_test tt_docs #tt_gds
 clean:
 	git clean -dfx
 .PHONY: all borg_test clean generate_verilog just_test test tt_docs tt_gds tt_test tt_test_only \
