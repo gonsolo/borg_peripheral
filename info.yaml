@@ -3,7 +3,7 @@ project:
   title:        "Borg"
   author:       "Andreas Wendleder"
   discord:      "gonsolo"
-  description:  "Tiny GPU peripheral"
+  description:  "Borg Peripheral"
   language:     "Chisel" # other examples include SystemVerilog, Amaranth, VHDL, etc
   clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
 
@@ -17,7 +17,6 @@ project:
   # Source files must be in ./src and you must list each source file separately, one per line.
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
-    - "peripheral.v"
     - "AddRawFN.sv"
     - "AddRecFN.sv"
     - "Borg.sv"
