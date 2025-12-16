@@ -42,7 +42,7 @@
       ];
 
       shellHook = ''
-        export GONSOLO_PROJECT="TinyQV-GPU"
+        export GONSOLO_PROJECT="borg_peripheral"
         echo "Entering $GONSOLO_PROJECT development shell..."
       '';
     };

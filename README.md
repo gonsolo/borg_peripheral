@@ -1,6 +1,9 @@
 ![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
 
-# TinyQV-GPU - Tinytapeout Floating Point Test
+# Borg Peripheral
+
+This is a full peripheral for TinyQV intended to be taped out with
+Tinytapeout. Right now it implements a floating point adder.
 
 ## Working
 
