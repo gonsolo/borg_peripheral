@@ -9,13 +9,12 @@ Tinytapeout. Right now it implements a floating point adder.
 
 * Mill test (Arch, Nix)
 * TT test, docs (Arch, Github, Nix)
-* TT gds (Arch, Github)
+* TT gds (Arch, Github, Nix)
 * Chisel floating point addition + test
 
 ## TODO
 
 * Chisel floating point multiplication + test
-* TT gds (Nix - librelane & ciel missing)
 * Pull request for ttsky25a-tinyQV
 * Test there
 * When pico-ice arrives: FPGA testing
