@@ -27,6 +27,8 @@ jobs:
 
       - name: Generate SystemVerilog
         shell: bash
+        env:
+          MILL_NO_SERVER: "true"
         run: make generate_verilog
 
       # Set Python up and install cocotb
