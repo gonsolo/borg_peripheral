@@ -1,7 +1,7 @@
 {
   inputs = {
-    # The commit when libgdstk was merged
-    nixpkgs.url = "github:NixOS/nixpkgs/240062ab";
+    #nixpkgs.url = "github:NixOS/nixpkgs/240062ab";
+    nixpkgs.url = "github:gonsolo/nixpkgs/librelane";
     alejandra.url = "github:kamadorueda/alejandra/4.0.0";
   };
 
@@ -37,6 +37,7 @@
         pkgs.gnumake
         pkgs.iverilog
         pkgs.jdk25
+        pkgs.librelane
         pkgs.mill
         pythonEnv
       ];

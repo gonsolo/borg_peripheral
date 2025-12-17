@@ -14,7 +14,7 @@ tt_gds:
 	$(TT_TOOL) --create-user-config --ihp
 	$(TT_TOOL) --harden --ihp
 nix:
-	nix develop --command make borg_test tt_test tt_docs #tt_gds
+	nix develop --command make tt_gds #borg_test tt_test tt_docs
 clean:
 	git clean -dfx
 print_stats:
