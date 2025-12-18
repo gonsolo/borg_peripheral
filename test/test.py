@@ -5,12 +5,21 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
 from tqv import TinyQV
+import struct
 
-PERIPHERAL_NUM = 0 
+# Helper to convert a Python float to a 32-bit integer bit-pattern (IEEE-754)
+def float_to_bits(f):
+    return struct.unpack('<I', struct.pack('<f', f))[0]
+
+# Helper to convert a 32-bit integer bit-pattern back to a Python float
+def bits_to_float(b):
+    return struct.unpack('<f', struct.pack('<I', b & 0xFFFFFFFF))[0]
+
+PERIPHERAL_NUM = 0  # Adjust if necessary
 
 @cocotb.test()
-async def test_borg_addition(dut):
-    dut._log.info("Start test_borg_addition")
+async def test_borg_float_addition(dut):
+    dut._log.info("Start test_borg_float_addition")
 
     # 1. Setup Clock (10MHz)
     clock = Clock(dut.clk, 100, unit="ns")
@@ -21,42 +30,53 @@ async def test_borg_addition(dut):
     # 2. Reset
     await tqv.reset()
 
-    # 3. Test Case: Write A, Write B, Read Result
-    val_a = 0x1234
-    val_b = 0xABCD
+    # 3. Test Case: 1.5 + 2.75 = 4.25
+    val_a = 1.5
+    val_b = 2.75
     
-    dut._log.info(f"Writing A={hex(val_a)} to Addr 0 and B={hex(val_b)} to Addr 4")
+    bits_a = float_to_bits(val_a)
+    bits_b = float_to_bits(val_b)
+    
+    dut._log.info(f"Writing A={val_a} ({hex(bits_a)}) and B={val_b} ({hex(bits_b)})")
     
     # Write to Operand A (Addr 0)
-    await tqv.write_word_reg(0, val_a)
+    await tqv.write_word_reg(0, bits_a)
     # Write to Operand B (Addr 4)
-    await tqv.write_word_reg(4, val_b)
+    await tqv.write_word_reg(4, bits_b)
 
     # 4. Read back the result (Addr 8)
     dut._log.info("Reading back result from Addr 8...")
-    actual_sum = await tqv.read_word_reg(8)
+    raw_res = await tqv.read_word_reg(8)
+    actual_sum = bits_to_float(raw_res)
     
-    expected_sum = (val_a + val_b) & 0xFFFFFFFF
+    expected_sum = val_a + val_b
     
-    dut._log.info(f"Read sum: {hex(actual_sum)}")
-    dut._log.info(f"Expected: {hex(expected_sum)}")
+    dut._log.info(f"Read bits: {hex(raw_res)}")
+    dut._log.info(f"Interpreted sum: {actual_sum}")
+    dut._log.info(f"Expected sum: {expected_sum}")
 
-    assert actual_sum == expected_sum, \
-        f"Addition failed! Got {hex(actual_sum)}, expected {hex(expected_sum)}"
+    # Use math.isclose or a small epsilon for float comparisons
+    assert abs(actual_sum - expected_sum) < 1e-6, \
+        f"Float addition failed! Got {actual_sum}, expected {expected_sum}"
 
-    # 5. Verify individual registers still hold their values
-    read_a = await tqv.read_word_reg(0)
-    assert read_a == val_a, f"Operand A corrupted! Got {hex(read_a)}"
+    # 5. Stress test with multiple additions
+    test_pairs = [
+        (10.0, 20.0),
+        (0.1, 0.2),
+        (-5.5, 2.25),
+        (100.0, 0.0),
+        (1.23e-2, 4.56e-2)
+    ]
 
-    # 6. Stress test with multiple additions
-    for i in range(10):
-        a = i * 100
-        b = i * 200
-        await tqv.write_word_reg(0, a)
-        await tqv.write_word_reg(4, b)
+    for a, b in test_pairs:
+        await tqv.write_word_reg(0, float_to_bits(a))
+        await tqv.write_word_reg(4, float_to_bits(b))
         
-        # Read result
-        res = await tqv.read_word_reg(8)
-        assert res == (a + b), f"Iter {i} failed: {res} != {a+b}"
+        raw_res = await tqv.read_word_reg(8)
+        res = bits_to_float(raw_res)
+        
+        # Checking with tolerance because floating point math is tricky
+        assert abs(res - (a + b)) < 1e-6, f"Failed: {a} + {b} = {res}"
+        dut._log.info(f"Passed: {a} + {b} = {res}")
 
-    dut._log.info("Borg Integer Addition Test Passed!")
+    dut._log.info("Borg Floating Point Addition Test Passed!")

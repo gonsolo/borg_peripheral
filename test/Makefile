@@ -7,10 +7,10 @@ FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
 PROJECT_SOURCES := Borg.sv
-#PROJECT_SOURCES += AddRawFN.sv
-#PROJECT_SOURCES += AddRecFN.sv
-#PROJECT_SOURCES += RoundAnyRawFNToRecFN_ie8_is26_oe8_os24.sv
-#PROJECT_SOURCES += RoundRawFNToRecFN_e8_s24.sv
+PROJECT_SOURCES += AddRawFN.sv
+PROJECT_SOURCES += AddRecFN.sv
+PROJECT_SOURCES += RoundAnyRawFNToRecFN_ie8_is26_oe8_os24.sv
+PROJECT_SOURCES += RoundRawFNToRecFN_e8_s24.sv
 
 ADDITIONAL_SOURCES = tt_wrapper.v test_harness/*.sv
 

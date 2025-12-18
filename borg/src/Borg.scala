@@ -17,9 +17,9 @@ class Borg extends Module {
         val user_interrupt = Output(Bool())
     })
 
-    // 1. Registers for inputs
-    val operand_A = RegInit(0.U(32.W))
-    val operand_B = RegInit(0.U(32.W))
+    // 1. Registers for input bits (Standard IEEE-754)
+    val operand_A_bits = RegInit(0.U(32.W))
+    val operand_B_bits = RegInit(0.U(32.W))
 
     // 2. Address Constants
     val ADDR_A      = 0.U(6.W)
@@ -30,25 +30,37 @@ class Borg extends Module {
     val is_writing = io.data_write_n === "b10".U
     when(is_writing) {
         when(io.address === ADDR_A) {
-            operand_A := io.data_in
+            operand_A_bits := io.data_in
         } .elsewhen(io.address === ADDR_B) {
-            operand_B := io.data_in
+            operand_B_bits := io.data_in
         }
     }
 
-    // 4. Arithmetic Logic (Integer Addition)
-    // We register the result to ensure better timing, similar to your first working example
-    val sum_result = RegNext(operand_A + operand_B)
+    // 4. HardFloat Conversion & Addition
+    // Convert standard 32-bit Float bits to Recoded format (33 bits)
+    // expWidth = 8, sigWidth = 24 for Float32
+    val recA = recFNFromFN(8, 24, operand_A_bits)
+    val recB = recFNFromFN(8, 24, operand_B_bits)
 
-    // 5. Read Logic (Bus Decoding)
+    val f_add = Module(new AddRecFN(8, 24))
+    f_add.io.subOp := false.B                          // False = Add
+    f_add.io.a := recA
+    f_add.io.b := recB
+    f_add.io.roundingMode := 0.U                       // round_near_even
+    f_add.io.detectTininess := 1.U                     // tininess_afterRounding
+
+    // 5. Convert result back to standard IEEE-754 bits
+    // We wrap this in RegNext to improve timing for the bus read
+    val result_bits = RegNext(fNFromRecFN(8, 24, f_add.io.out))
+
+    // 6. Read Logic
     io.data_out := MuxLookup(io.address, 0.U)(Seq(
-        ADDR_A      -> operand_A,
-        ADDR_B      -> operand_B,
-        ADDR_RESULT -> sum_result
+        ADDR_A      -> operand_A_bits,
+        ADDR_B      -> operand_B_bits,
+        ADDR_RESULT -> result_bits
     ))
 
-    // 6. Handshake / Defaults
-    // data_ready is true when writing, or always true if you don't need wait states
+    // 7. Handshake / Defaults
     io.data_ready := true.B
     io.uo_out := 0.U
     io.user_interrupt := false.B
