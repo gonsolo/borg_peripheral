@@ -5,7 +5,7 @@ import mill.scalalib.*
 
 trait Borg extends ScalaModule {
   def scalaVersion = "2.13.18"
-  def chiselVersion = "7.4.0"
+  def chiselVersion = "7.6.0"
 
   def mvnDeps = Seq(
     mvn"org.chipsalliance::chisel:${chiselVersion}",
