@@ -15,7 +15,7 @@ def bits_to_float(b):
 PERIPHERAL_NUM = 39
 
 @cocotb.test()
-async def test_borg_float_addition(dut):
+async def test_borg_float_addition_and_multiplication(dut):
     dut._log.info("Starting Borg Floating Point Addition Test")
 
     clock = Clock(dut.clk, 100, unit="ns")
@@ -24,7 +24,7 @@ async def test_borg_float_addition(dut):
     await tqv.reset()
 
     # Unified Address Map
-    ADDR_A, ADDR_B, ADDR_RESULT = 0, 4, 8
+    ADDR_A, ADDR_B, ADDR_ADD, ADDR_MUL = 0, 4, 8, 12
     EPSILON = 1e-6
 
     val_a, val_b = 1.25, 2.5
@@ -33,11 +33,17 @@ async def test_borg_float_addition(dut):
     await tqv.write_word_reg(ADDR_A, float_to_bits(val_a))
     await tqv.write_word_reg(ADDR_B, float_to_bits(val_b))
     
-    actual_bits = await tqv.read_word_reg(ADDR_RESULT)
-    actual_float = bits_to_float(actual_bits)
+    add_actual_bits = await tqv.read_word_reg(ADDR_ADD)
+    add_actual_float = bits_to_float(add_actual_bits)
     
-    dut._log.info(f"Initial Check: {val_a} + {val_b} = {actual_float}")
-    assert abs(actual_float - expected_sum) < EPSILON, f"Failed: Got {actual_float}"
+    dut._log.info(f"Initial Check: {val_a} + {val_b} = {add_actual_float}")
+    assert abs(add_actual_float - expected_sum) < EPSILON, f"Failed: Got {add_actual_float}"
+
+    mul_actual_bits = await tqv.read_word_reg(ADDR_MUL)
+    mul_actual_float = bits_to_float(mul_actual_bits)
+
+    dut._log.info(f"Initial Check: {val_a} * {val_b} = {mul_actual_float}")
+    assert abs(mul_actual_float - (val_a * val_b)) < EPSILON, f"Failed: Got {mul_actual_float}"
 
     read_bits_a = await tqv.read_word_reg(ADDR_A)
     assert read_bits_a == float_to_bits(val_a), "Operand A corrupted!"
@@ -53,9 +59,13 @@ async def test_borg_float_addition(dut):
     for a, b in test_pairs:
         await tqv.write_word_reg(ADDR_A, float_to_bits(a))
         await tqv.write_word_reg(ADDR_B, float_to_bits(b))
-        res = bits_to_float(await tqv.read_word_reg(ADDR_RESULT))
+        add_res = bits_to_float(await tqv.read_word_reg(ADDR_ADD))
+        mul_res = bits_to_float(await tqv.read_word_reg(ADDR_MUL))
 
-        assert abs(res - (a + b)) < EPSILON, f"Iter failed: {a} + {b} = {res}"
-        dut._log.info(f"Passed: {a} + {b} = {res}")
+        assert abs(add_res - (a + b)) < EPSILON, f"Iter failed: {a} + {b} = {add_res}"
+        dut._log.info(f"Passed: {a} + {b} = {add_res}")
 
-    dut._log.info("Borg Floating Point Addition Test Passed!")
+        assert abs(mul_res - (a * b)) < EPSILON, f"Iter failed: {a} * {b} = {mul_res}"
+        dut._log.info(f"Passed: {a} * {b} = {mul_res}")
+
+    dut._log.info("Borg Floating Point Addition and Multiplication Test Passed!")

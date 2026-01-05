@@ -17,12 +17,13 @@ object BorgTests extends TestSuite {
     }
 
     val tests = Tests {
-        utest.test("borg_float_addition") {
+        utest.test("borg_float_addition_multiplication") {
             simulate(new Borg) { borg =>
                 // Address constants
                 val ADDR_A      = 0
                 val ADDR_B      = 4
-                val ADDR_RESULT = 8
+                val ADDR_ADD    = 8
+                val ADDR_MUL    = 12
 
                 // Initial State
                 borg.io.data_write_n.poke("b11".U)
@@ -46,24 +47,32 @@ object BorgTests extends TestSuite {
                 borg.io.data_write_n.poke("b11".U)
                 borg.clock.step(1)
 
-                // 4. Read from Address 8 (The Result)
-                borg.io.address.poke(ADDR_RESULT.U)
+                borg.io.address.poke(ADDR_ADD.U)
                 borg.io.data_read_n.poke("b10".U) 
                 
-                val rawOut    = borg.io.data_out.peek().litValue
-                val actualSum = bitsToFloat(rawOut)
-                val isReady   = borg.io.data_ready.peek().litToBoolean
+                val add_rawOut    = borg.io.data_out.peek().litValue
+                val add_actualSum = bitsToFloat(add_rawOut)
+                val add_isReady   = borg.io.data_ready.peek().litToBoolean
                 
-                val expectedSum = valA + valB
-                println(s"A: $valA, B: $valB, Sum Output: $actualSum, Bits: ${rawOut.toString(16)}")
+                val add_expectedSum = valA + valB
+                println(s"A: $valA, B: $valB, Sum Output: $add_actualSum, Bits: ${add_rawOut.toString(16)}")
 
-                // 5. Assertions
-                utest.assert(isReady == true)
-                // Using a tolerance check for floats is usually safer, 
-                // though for these exact values (1.5, 2.75) bits should be identical.
-                utest.assert(actualSum == expectedSum)
+                utest.assert(add_isReady == true)
+                utest.assert(add_actualSum == add_expectedSum)
 
-                // 6. Verify Operand A bits are still intact
+                borg.io.address.poke(ADDR_MUL.U)
+                borg.io.data_read_n.poke("b10".U) 
+                
+                val mul_rawOut    = borg.io.data_out.peek().litValue
+                val mul_actualMul = bitsToFloat(mul_rawOut)
+                val mul_isReady   = borg.io.data_ready.peek().litToBoolean
+                
+                val mul_expectedMul = valA * valB
+                println(s"A: $valA, B: $valB, Mul Output: $mul_actualMul, Bits: ${mul_rawOut.toString(16)}")
+
+                utest.assert(mul_isReady == true)
+                utest.assert(mul_actualMul == mul_expectedMul)
+
                 borg.io.address.poke(ADDR_A.U)
                 val readA = bitsToFloat(borg.io.data_out.peek().litValue)
                 utest.assert(readA == valA)

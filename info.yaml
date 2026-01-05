@@ -19,6 +19,9 @@ project:
   source_files:
     - "AddRawFN.sv"
     - "AddRecFN.sv"
+    - "MulFullRawFN.sv"
+    - "MulRawFN.sv"
+    - "MulRecFN.sv"
     - "Borg.sv"
     - "RoundAnyRawFNToRecFN_ie8_is26_oe8_os24.sv"
     - "RoundRawFNToRecFN_e8_s24.sv"
