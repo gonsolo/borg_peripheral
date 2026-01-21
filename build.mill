@@ -7,24 +7,34 @@ trait Borg extends ScalaModule {
   def scalaVersion = "2.13.18"
   def chiselVersion = "7.6.0"
 
-  def mvnDeps = Seq(
-    mvn"org.chipsalliance::chisel:${chiselVersion}",
-  )
-
-  object test extends ScalaTests {
-    def mvnDeps = Seq(mvn"com.lihaoyi::utest:0.9.4")
-    def testFramework = "utest.runner.Framework"
+  override def mvnDeps = Task {
+    super.mvnDeps() ++ Seq(
+      mvn"org.chipsalliance::chisel:$chiselVersion"
+    )
   }
 
-  def scalacOptions = Seq(
-    "-feature",
-    "-language:reflectiveCalls"
-  )
+  override def scalacPluginMvnDeps = Task {
+    super.scalacPluginMvnDeps() ++ Seq(
+      mvn"org.chipsalliance:::chisel-plugin:$chiselVersion"
+    )
+  }
 
-  def scalacPluginMvnDeps = Seq(
-    mvn"org.chipsalliance:::chisel-plugin:${chiselVersion}"
-  )
+  override def scalacOptions = Task {
+    super.scalacOptions() ++ Seq(
+      "-feature",
+      "-language:reflectiveCalls",
+      "-deprecation",
+      "-Xcheckinit"
+    )
+  }
+
+  object test extends ScalaTests with TestModule.Utest {
+    override def mvnDeps = Task {
+      super.mvnDeps() ++ Seq(
+        mvn"com.lihaoyi::utest:0.9.4"
+      )
+    }
+  }
 }
 
-object borg extends Borg {
-}
+object borg extends Borg
