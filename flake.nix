@@ -58,7 +58,6 @@
 
       shellHook = ''
         export GONSOLO_PROJECT="borg_peripheral"
-        export LIBRELANE_LOCAL=1
 
         # PURE MODE COMPATIBILITY:
         # 1. Mill/Java require a HOME to write lockfiles and caches.

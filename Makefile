@@ -14,7 +14,7 @@ tt_gds:
 	$(TT_TOOL) --create-user-config --ihp
 	$(TT_TOOL) --harden --ihp
 nix:
-	nix develop --command make all
+	nix develop --ignore-environment --command make all
 clean:
 	git clean -dfx
 print_stats:
