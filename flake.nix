@@ -30,20 +30,22 @@
     devShells.${system}.default = pkgs.mkShell {
       # Use nativeBuildInputs for tools that provide executables
       nativeBuildInputs = [
-        pkgs.which # CRITICAL: Fixes the Mill launcher error
-        pkgs.coreutils # Provides basic commands (mkdir, ls, env)
-        pkgs.git # Needed if your Python scripts or Mill use git
-        pkgs.gnused # Standard sed
-        pkgs.gnugrep # Standard grep
-
         pkgs.bash-completion
         pkgs.bzip2
         pkgs.cmake
+        pkgs.coreutils
+        pkgs.gcc
+        pkgs.git
+        pkgs.gnugrep
         pkgs.gnumake
+        pkgs.gnused
         pkgs.iverilog
-        pkgs.jdk25 # Kept as requested
+        pkgs.jdk25
         pkgs.librelane
         pkgs.mill
+        pkgs.pkg-config
+        pkgs.verilator
+        pkgs.which
         pythonEnv
       ];
 
