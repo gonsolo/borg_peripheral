@@ -41,18 +41,24 @@
         pkgs.gnused
         pkgs.iverilog
         pkgs.jdk25
+        pkgs.klayout
         pkgs.librelane
+        pkgs.magic-vlsi
         pkgs.mill
+        pkgs.netgen-vlsi
+        pkgs.openroad
         pkgs.pandoc
         pkgs.pkg-config
         pkgs.typst
         pkgs.verilator
         pkgs.which
+        pkgs.yosys
         pythonEnv
       ];
 
       shellHook = ''
         export GONSOLO_PROJECT="borg_peripheral"
+        export LIBRELANE_LOCAL=1
 
         # PURE MODE COMPATIBILITY:
         # 1. Mill/Java require a HOME to write lockfiles and caches.
@@ -67,6 +73,18 @@
         export JAVA_HOME=${pkgs.jdk25}
 
         echo "Entering $GONSOLO_PROJECT development shell..."
+
+        # Create a bin directory in our local nix-home
+        mkdir -p $HOME/bin
+
+        # Link native yosys to the name the python script is looking for
+        ln -sf ${pkgs.yosys}/bin/yosys $HOME/bin/yowasp-yosys
+
+        # Ensure our shim is at the front of the PATH
+        export PATH="$HOME/bin:$PATH"
+
+        sed -i 's/--dockerized//g' tt/project.py
+        sed -i 's/--docker-no-tty//g' tt/project.py
       '';
     };
 
