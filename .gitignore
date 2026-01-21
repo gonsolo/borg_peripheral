@@ -19,3 +19,4 @@ test/gate_level_netlist.v
 /datasheet.pdf
 /out
 /generated
+.nix-home/

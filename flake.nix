@@ -43,7 +43,9 @@
         pkgs.jdk25
         pkgs.librelane
         pkgs.mill
+        pkgs.pandoc
         pkgs.pkg-config
+        pkgs.typst
         pkgs.verilator
         pkgs.which
         pythonEnv
