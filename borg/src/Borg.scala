@@ -22,17 +22,31 @@ class Borg extends Module {
   val rf = RegInit(VecInit(Seq.fill(3)(0.U(32.W))))
   val instr = RegInit(0.U(32.W))
 
+  // --- Latency Logic ---
+  val busy_counter = RegInit(0.U(3.W))
+  val is_busy = busy_counter > 0.U
+
+  val is_writing = io.data_write_n === "b10".U
+  val writing_instr = is_writing && io.address === 60.U
+
+  // State Machine for stalling
+  when(writing_instr) {
+    busy_counter := 4.U // Start 4-cycle countdown
+    instr := io.data_in
+  }.elsewhen(is_busy) {
+    busy_counter := busy_counter - 1.U
+  }
+
   // Instruction Fields (RISC-V Standard)
   val funct7 = instr(31, 25)
   val rs2_idx = instr(24, 20) % 3.U
   val rs1_idx = instr(19, 15) % 3.U
 
-  val is_writing = io.data_write_n === "b10".U
-  when(is_writing) {
+  // Register file updates (inhibited when writing a new instruction)
+  when(is_writing && !writing_instr) {
     when(io.address === 0.U) { rf(0) := io.data_in }
       .elsewhen(io.address === 4.U) { rf(1) := io.data_in }
       .elsewhen(io.address === 16.U) { rf(2) := io.data_in }
-      .elsewhen(io.address === 60.U) { instr := io.data_in }
   }
 
   val recA = recFNFromFN(8, 24, rf(rs1_idx))
@@ -53,7 +67,6 @@ class Borg extends Module {
   f_mul.io.detectTininess := 1.U
 
   // Unified Execution Selection
-  // If funct7 is 0x08 (8 decimal), select Multiply. Otherwise, Add.
   val result_bits = Mux(
     funct7 === 0x08.U,
     fNFromRecFN(8, 24, f_mul.io.out),
@@ -65,12 +78,16 @@ class Borg extends Module {
       0.U -> rf(0),
       4.U -> rf(1),
       16.U -> rf(2),
-      8.U -> result_bits, // Address 12 is now retired
+      8.U -> result_bits,
       60.U -> instr
     )
   )
 
-  io.data_ready := true.B
+  // --- Bus Handshaking ---
+  // data_ready is false if we are currently writing the instruction
+  // OR if the counter is still running.
+  io.data_ready := !is_busy && !writing_instr
+
   io.uo_out := 0.U
   io.user_interrupt := false.B
 }
