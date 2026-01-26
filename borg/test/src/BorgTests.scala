@@ -8,30 +8,50 @@ import os._
 
 object BorgTests extends TestSuite {
 
-  /** * Helper to convert Scala Float (32-bit) to BigInt bit pattern (IEEE 754)
-   */
   def floatToBits(f: Float): BigInt = {
     BigInt(java.lang.Float.floatToRawIntBits(f)) & 0xffffffffL
   }
 
-  /** * Helper to convert bit pattern back to Scala Float (32-bit)
-   */
   def bitsToFloat(b: BigInt): Float = {
     java.lang.Float.intBitsToFloat(b.toInt)
   }
 
+  class BorgDriver(borg: Borg) {
+    def writeReg(regIdx: Int, value: Float): Unit = {
+      borg.io.address.poke((regIdx * 4).U)
+      borg.io.data_in.poke(floatToBits(value).U)
+      borg.io.data_write_n.poke("b10".U) // Assert Write Enable
+      borg.clock.step(1)
+      borg.io.data_write_n.poke("b11".U) // De-assert
+      borg.clock.step(1)
+    }
+
+    def readAddr(addr: Int): Float = {
+      borg.io.address.poke(addr.U)
+      borg.io.data_read_n.poke("b10".U) // Assert Read Enable
+      // Peek the data currently on the bus
+      val result = bitsToFloat(borg.io.data_out.peek().litValue)
+      borg.clock.step(1)
+      borg.io.data_read_n.poke("b11".U)
+      result
+    }
+
+    def reset(): Unit = {
+      borg.io.data_write_n.poke("b11".U)
+      borg.io.data_read_n.poke("b11".U)
+      borg.clock.step(1)
+    }
+  }
+
   val tests = Tests {
-    utest.test("borg_float_addition_multiplication_batch") {
+    utest.test("borg_vulkan_style_math_batch") {
       
-      // 1. Resolve the project root path.
       val projectRoot = sys.env.get("PROJECT_ROOT") match {
         case Some(path) => os.Path(path)
         case None       => os.pwd 
       }
       
       val jsonFile = projectRoot / "data" / "test_cases.json"
-      
-      // 2. Load and parse the shared JSON data
       if (!os.exists(jsonFile)) {
         throw new Exception(s"Shared test vectors not found at: $jsonFile")
       }
@@ -39,66 +59,38 @@ object BorgTests extends TestSuite {
       val data = ujson.read(os.read(jsonFile))
       val epsilon = data("epsilon").num.toFloat
       
-      // Map JSON numbers explicitly to Scala Floats (32-bit)
       val testPairs = data("pairs").arr.map { pair =>
         (pair(0).num.toFloat, pair(1).num.toFloat)
       }.toSeq
 
-      // 3. Run the Hardware Simulation
+      // 2. Run the Hardware Simulation
       simulate(new Borg) { borg =>
-        val ADDR_A   = 0
-        val ADDR_B   = 4
-        val ADDR_ADD = 8
-        val ADDR_MUL = 12
-
-        // Initialize State
-        borg.io.data_write_n.poke("b11".U)
-        borg.io.data_read_n.poke("b11".U)
-        borg.clock.step(1)
+        val driver = new BorgDriver(borg)
+        driver.reset()
 
         testPairs.foreach { case (valA, valB) =>
-          val a32: Float = valA
-          val b32: Float = valB
-
-          // Step A: Write Operand A
-          borg.io.address.poke(ADDR_A.U)
-          borg.io.data_in.poke(floatToBits(a32).U)
-          borg.io.data_write_n.poke("b10".U) 
-          borg.clock.step(1)
-
-          // Step B: Write Operand B
-          borg.io.address.poke(ADDR_B.U)
-          borg.io.data_in.poke(floatToBits(b32).U)
-          borg.clock.step(1)
-
-          // Step C: De-assert write
-          borg.io.data_write_n.poke("b11".U)
-          borg.clock.step(1)
-
-          // Step D: Verify Addition Result
-          borg.io.address.poke(ADDR_ADD.U)
-          borg.io.data_read_n.poke("b10".U) 
-          
-          val addActual = bitsToFloat(borg.io.data_out.peek().litValue)
-          val expectedSum: Float = a32 + b32
-          
-          println(s"Checking Add: $a32 + $b32 = $addActual (Expected: $expectedSum)")
-          // Using explicit utest.assert to avoid Chisel collision
-          utest.assert(math.abs(addActual - expectedSum) < epsilon)
-
-          // Step E: Verify Multiplication Result
-          borg.io.address.poke(ADDR_MUL.U)
-          
-          val mulActual = bitsToFloat(borg.io.data_out.peek().litValue)
-          val expectedMul: Float = a32 * b32
-
-          println(s"Checking Mul: $a32 * $b32 = $mulActual (Expected: $expectedMul)")
-          // Using explicit utest.assert to avoid Chisel collision
-          utest.assert(math.abs(mulActual - expectedMul) < epsilon)
-
-          borg.clock.step(1)
+          runBasicMathTest(driver, valA, valB, epsilon)
         }
       }
     }
+  }
+
+  def runBasicMathTest(driver: BorgDriver, a: Float, b: Float, epsilon: Float): Unit = {
+    // Phase 1: Upload Data (Like Descriptor Set updates)
+    driver.writeReg(0, a) // ADDR 0
+    driver.writeReg(1, b) // ADDR 4
+
+    // Phase 2: Read Results (Calculated in the background by HardFloat)
+    // ADDR 8 is Addition, ADDR 12 is Multiplication
+    val addActual = driver.readAddr(8)
+    val mulActual = driver.readAddr(12)
+
+    val expectedSum: Float = a + b
+    val expectedMul: Float = a * b
+
+    println(s"Checking: $a & $b -> Add: $addActual (Exp: $expectedSum), Mul: $mulActual (Exp: $expectedMul)")
+
+    utest.assert(math.abs(addActual - expectedSum) < epsilon)
+    utest.assert(math.abs(mulActual - expectedMul) < epsilon)
   }
 }
