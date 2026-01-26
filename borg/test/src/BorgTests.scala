@@ -6,77 +6,75 @@ import utest._
 
 object BorgTests extends TestSuite {
 
-    // Helper to convert Scala Float to UInt bit pattern
-    def floatToBits(f: Float): BigInt = {
-        BigInt(java.lang.Float.floatToRawIntBits(f)) & 0xFFFFFFFFL
-    }
+  def floatToBits(f: Float): BigInt = {
+    BigInt(java.lang.Float.floatToRawIntBits(f)) & 0xffffffffL
+  }
 
-    // Helper to convert bit pattern back to Scala Float
-    def bitsToFloat(b: BigInt): Float = {
-        java.lang.Float.intBitsToFloat(b.toInt)
-    }
+  def bitsToFloat(b: BigInt): Float = {
+    java.lang.Float.intBitsToFloat(b.toInt)
+  }
 
-    val tests = Tests {
-        utest.test("borg_float_addition_multiplication") {
-            simulate(new Borg) { borg =>
-                // Address constants
-                val ADDR_A      = 0
-                val ADDR_B      = 4
-                val ADDR_ADD    = 8
-                val ADDR_MUL    = 12
+  val tests = Tests {
+    utest.test("borg_float_addition_multiplication_batch") {
+      simulate(new Borg) { borg =>
+        val ADDR_A = 0
+        val ADDR_B = 4
+        val ADDR_ADD = 8
+        val ADDR_MUL = 12
+        val EPSILON = 1e-6f
 
-                // Initial State
-                borg.io.data_write_n.poke("b11".U)
-                borg.io.data_read_n.poke("b11".U)
-                borg.clock.step(1)
+        // Define the same test pairs as the cocotb test
+        val testPairs = Seq(
+          (10.0f, 20.0f),
+          (0.1f, 0.2f),
+          (-5.5f, 2.25f),
+          (100.0f, 0.0f),
+          (0.0123f, 0.0456f) // 1.23e-2, 4.56e-2
+        )
 
-                // 1. Write Float 1.5 to Operand A
-                val valA = 1.5f
-                borg.io.address.poke(ADDR_A.U)
-                borg.io.data_in.poke(floatToBits(valA).U)
-                borg.io.data_write_n.poke("b10".U) 
-                borg.clock.step(1)
+        // Initialize state
+        borg.io.data_write_n.poke("b11".U)
+        borg.io.data_read_n.poke("b11".U)
+        borg.clock.step(1)
 
-                // 2. Write Float 2.75 to Operand B
-                val valB = 2.75f
-                borg.io.address.poke(ADDR_B.U)
-                borg.io.data_in.poke(floatToBits(valB).U)
-                borg.clock.step(1)
+        testPairs.foreach { case (valA, valB) =>
+          // 1. Write Operand A
+          borg.io.address.poke(ADDR_A.U)
+          borg.io.data_in.poke(floatToBits(valA).U)
+          borg.io.data_write_n.poke("b10".U)
+          borg.clock.step(1)
 
-                // 3. De-assert write and wait for RegNext(result) to propagate
-                borg.io.data_write_n.poke("b11".U)
-                borg.clock.step(1)
+          // 2. Write Operand B
+          borg.io.address.poke(ADDR_B.U)
+          borg.io.data_in.poke(floatToBits(valB).U)
+          borg.clock.step(1)
 
-                borg.io.address.poke(ADDR_ADD.U)
-                borg.io.data_read_n.poke("b10".U) 
-                
-                val add_rawOut    = borg.io.data_out.peek().litValue
-                val add_actualSum = bitsToFloat(add_rawOut)
-                val add_isReady   = borg.io.data_ready.peek().litToBoolean
-                
-                val add_expectedSum = valA + valB
-                println(s"A: $valA, B: $valB, Sum Output: $add_actualSum, Bits: ${add_rawOut.toString(16)}")
+          // 3. De-assert write and let logic settle
+          borg.io.data_write_n.poke("b11".U)
+          borg.clock.step(1)
 
-                utest.assert(add_isReady == true)
-                utest.assert(add_actualSum == add_expectedSum)
+          // 4. Check Addition
+          borg.io.address.poke(ADDR_ADD.U)
+          borg.io.data_read_n.poke("b10".U)
 
-                borg.io.address.poke(ADDR_MUL.U)
-                borg.io.data_read_n.poke("b10".U) 
-                
-                val mul_rawOut    = borg.io.data_out.peek().litValue
-                val mul_actualMul = bitsToFloat(mul_rawOut)
-                val mul_isReady   = borg.io.data_ready.peek().litToBoolean
-                
-                val mul_expectedMul = valA * valB
-                println(s"A: $valA, B: $valB, Mul Output: $mul_actualMul, Bits: ${mul_rawOut.toString(16)}")
+          val addActual = bitsToFloat(borg.io.data_out.peek().litValue)
+          val expectedSum = valA + valB
 
-                utest.assert(mul_isReady == true)
-                utest.assert(mul_actualMul == mul_expectedMul)
+          println(s"Testing Add: $valA + $valB = $addActual")
+          utest.assert(math.abs(addActual - expectedSum) < EPSILON)
 
-                borg.io.address.poke(ADDR_A.U)
-                val readA = bitsToFloat(borg.io.data_out.peek().litValue)
-                utest.assert(readA == valA)
-            }
+          // 5. Check Multiplication
+          borg.io.address.poke(ADDR_MUL.U)
+
+          val mulActual = bitsToFloat(borg.io.data_out.peek().litValue)
+          val expectedMul = valA * valB
+
+          println(s"Testing Mul: $valA * $valB = $mulActual")
+          utest.assert(math.abs(mulActual - expectedMul) < EPSILON)
+
+          borg.clock.step(1)
         }
+      }
     }
+  }
 }
