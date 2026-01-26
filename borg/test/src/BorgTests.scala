@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: © 2025-2026 Andreas Wendleder
+// SPDX-License-Identifier: CERN-OHL-S-2.0
+
 package borg
 
 import chisel3._
