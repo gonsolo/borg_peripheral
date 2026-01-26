@@ -37,20 +37,23 @@ object BorgTests extends TestSuite {
     writeAddr(borg, 0, floatToBits(a))
     writeAddr(borg, 4, floatToBits(b))
 
-    // 2. Program the chip: Set rs1=0 (bits 15-19) and rs2=1 (bits 20-24)
-    // This tells the hardware: "Use RF(0) and RF(1) for the next math op"
-    val instr = (1 << 20) | (0 << 15)
-    writeAddr(borg, 60, BigInt(instr))
-
-    // 3. Read results from the "Live" FPU addresses
+    // 1. TEST ADDITION
+    val add_instr = (0x00 << 25) | (1 << 20) | (0 << 15) // funct7=0
+    writeAddr(borg, 60, BigInt(add_instr))
     val addActual = readAddr(borg, 8)
-    val mulActual = readAddr(borg, 12)
+
+    // 2. TEST MULTIPLICATION
+    val mul_instr = (0x08 << 25) | (1 << 20) | (0 << 15) // funct7=0x08
+    writeAddr(borg, 60, BigInt(mul_instr))
+    val mulActual = readAddr(borg, 8) // Still reading from Address 8!
 
     val expectedSum = a + b
     val expectedMul = a * b
 
     // 4. Report results to console
-    println(f"Check: $a%8.2f op $b%8.2f -> Add: $addActual%8.2f (Exp: $expectedSum%8.2f), Mul: $mulActual%8.2f (Exp: $expectedMul%8.2f)")
+    println(
+      f"Check: $a%8.2f op $b%8.2f -> Add: $addActual%8.2f (Exp: $expectedSum%8.2f), Mul: $mulActual%8.2f (Exp: $expectedMul%8.2f)"
+    )
 
     utest.assert(math.abs(addActual - expectedSum) < epsilon)
     utest.assert(math.abs(mulActual - expectedMul) < epsilon)
@@ -59,12 +62,14 @@ object BorgTests extends TestSuite {
   val tests = Tests {
     utest.test("programmable_operand_batch_test") {
       // Load data from JSON
-      val projectRoot = sys.env.get("PROJECT_ROOT").map(os.Path(_)).getOrElse(os.pwd)
+      val projectRoot =
+        sys.env.get("PROJECT_ROOT").map(os.Path(_)).getOrElse(os.pwd)
       val jsonFile = projectRoot / "data" / "test_cases.json"
       val data = ujson.read(os.read(jsonFile))
-      
+
       val epsilon = data("epsilon").num.toFloat
-      val pairs = data("pairs").arr.map(p => (p(0).num.toFloat, p(1).num.toFloat))
+      val pairs =
+        data("pairs").arr.map(p => (p(0).num.toFloat, p(1).num.toFloat))
 
       simulate(new Borg) { borg =>
         println("\n--- Starting Programmable Math Batch ---")
