@@ -36,19 +36,24 @@ object BorgTests extends TestSuite {
   }
 
   def runBasicMathTest(borg: Borg, a: Float, b: Float, epsilon: Float): Unit = {
-    // 1. Write operands to RF(0) and RF(1)
     writeAddr(borg, 0, floatToBits(a))
     writeAddr(borg, 4, floatToBits(b))
 
-    // 1. TEST ADDITION
-    val add_instr = (0x00 << 25) | (1 << 20) | (0 << 15) // funct7=0
+    val add_instr = (0x00 << 25) | (1 << 20) | (0 << 15)
     writeAddr(borg, 60, BigInt(add_instr))
+
+    while (!borg.io.data_ready.peek().litToBoolean) {
+      borg.clock.step(1)
+    }
     val addActual = readAddr(borg, 8)
 
-    // 2. TEST MULTIPLICATION
-    val mul_instr = (0x08 << 25) | (1 << 20) | (0 << 15) // funct7=0x08
+    val mul_instr = (0x08 << 25) | (1 << 20) | (0 << 15)
     writeAddr(borg, 60, BigInt(mul_instr))
-    val mulActual = readAddr(borg, 8) // Still reading from Address 8!
+
+    while (!borg.io.data_ready.peek().litToBoolean) {
+      borg.clock.step(1)
+    }
+    val mulActual = readAddr(borg, 8)
 
     val expectedSum = a + b
     val expectedMul = a * b

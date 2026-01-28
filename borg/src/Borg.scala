@@ -66,26 +66,33 @@ class Borg extends Module {
   f_mul.io.roundingMode := 0.U
   f_mul.io.detectTininess := 1.U
 
-  // Unified Execution Selection
-  val result_bits = Mux(
+  // --- Unified Execution Selection with Pipeline Register ---
+  // This register breaks the 240ns path by providing a "halfway house"
+  // for the math result before it hits the output multiplexer.
+  val math_result_reg = RegInit(0.U(32.W))
+
+  val selected_math_bits = Mux(
     funct7 === 0x08.U,
     fNFromRecFN(8, 24, f_mul.io.out),
     fNFromRecFN(8, 24, f_add.io.out)
   )
+
+  // Capture result on the final cycle of the stall
+  when(busy_counter === 1.U) {
+    math_result_reg := selected_math_bits
+  }
 
   io.data_out := MuxLookup(io.address, 0.U)(
     Seq(
       0.U -> rf(0),
       4.U -> rf(1),
       16.U -> rf(2),
-      8.U -> result_bits,
+      8.U -> math_result_reg, // Using the registered version here
       60.U -> instr
     )
   )
 
   // --- Bus Handshaking ---
-  // data_ready is false if we are currently writing the instruction
-  // OR if the counter is still running.
   io.data_ready := !is_busy && !writing_instr
 
   io.uo_out := 0.U
