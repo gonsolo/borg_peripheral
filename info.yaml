@@ -1,16 +1,15 @@
 # Tiny Tapeout project information
 project:
-  title:        "Borg"
+  title:        "Borg - Floating point addition and multiplication"
   author:       "Andreas Wendleder"
   discord:      "gonsolo"
-  description:  "Borg Peripheral"
-  language:     "Chisel" # other examples include SystemVerilog, Amaranth, VHDL, etc
+  description:  "A Risc-V SoC with a floating point peripheral"
+  language:     "Chisel"
   clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
 
   # How many tiles your design occupies? A single tile is about 167x108 uM.
   tiles: "3x2"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
 
-  # Do not change the top module here.  Instead change tt_wrapper.v line 38 to refer to your module.
   top_module:  "tt_um_tqv_peripheral_harness"
 
   # List your project's source files here.
