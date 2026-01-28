@@ -1,53 +1,34 @@
-# Makefile
-# See https://docs.cocotb.org/en/stable/quickstart.html for more info
-
-# defaults
 SIM ?= icarus
-FST ?= -fst # Use more efficient FST format
+FST ?= -fst
 TOPLEVEL_LANG ?= verilog
-SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES := Borg.sv
-PROJECT_SOURCES += AddRawFN.sv
-PROJECT_SOURCES += AddRecFN.sv
-PROJECT_SOURCES += MulFullRawFN.sv
-PROJECT_SOURCES += MulRawFN.sv
-PROJECT_SOURCES += MulRecFN.sv
-PROJECT_SOURCES += RoundAnyRawFNToRecFN_ie8_is26_oe8_os24.sv
-PROJECT_SOURCES += RoundRawFNToRecFN_e8_s24.sv
 
-ADDITIONAL_SOURCES = tt_wrapper.v test_harness/*.sv
+SRC_DIR = $(PWD)/../src
+
+YAML_SOURCES = $(shell sed -n '/source_files:/,/pinout:/p' ../info.yaml | grep '\- "' | sed 's/.*"\(.*\)".*/\1/')
 
 ifneq ($(GATES),yes)
 
-# RTL simulation:
-SIM_BUILD				= sim_build/rtl
-VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
-VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(ADDITIONAL_SOURCES))
+# RTL Simulation:
+SIM_BUILD = sim_build/rtl
+# Wir nehmen NUR die Dateien aus der info.yaml. 
+# Da tt_wrapper.v dort drin steht, brauchen wir keine ADDITIONAL_SOURCES für den Wrapper mehr.
+VERILOG_SOURCES += $(addprefix $(SRC_DIR)/, $(YAML_SOURCES))
 
 else
 
-# Gate level simulation:
-SIM_BUILD				= sim_build/gl
-COMPILE_ARGS    += -DGL_TEST
-COMPILE_ARGS    += -DFUNCTIONAL
-COMPILE_ARGS    += -DSIM
+# Gate Level Simulation:
+SIM_BUILD = sim_build/gl
+COMPILE_ARGS += -DGL_TEST -DFUNCTIONAL -DSIM
 VERILOG_SOURCES += $(PDK_ROOT)/ihp-sg13g2/libs.ref/sg13g2_io/verilog/sg13g2_io.v
 VERILOG_SOURCES += $(PDK_ROOT)/ihp-sg13g2/libs.ref/sg13g2_stdcell/verilog/sg13g2_stdcell.v
-
-# this gets copied in by the GDS action workflow
 VERILOG_SOURCES += $(PWD)/gate_level_netlist.v
 
 endif
 
-# Allow sharing configuration between design and testbench via `include`:
-COMPILE_ARGS 		+= -I$(SRC_DIR)
+COMPILE_ARGS += -I$(SRC_DIR) -I$(SRC_DIR)/test_harness
 
-# Include the testbench sources:
 VERILOG_SOURCES += $(PWD)/tb.v
 TOPLEVEL = tb
-
-# List test modules to run, separated by commas and without the .py suffix:
 COCOTB_TEST_MODULES = test
 
-# include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
