@@ -81,9 +81,6 @@
 
         # Ensure our shim is at the front of the PATH
         export PATH="$HOME/bin:$PATH"
-
-        sed -i 's/--dockerized//g' tt/project.py
-        sed -i 's/--docker-no-tty//g' tt/project.py
       '';
     };
 
