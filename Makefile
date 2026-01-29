@@ -14,8 +14,7 @@ tt_gds:
 	$(TT_TOOL) --create-user-config --ihp --no-docker
 	$(TT_TOOL) --harden --ihp --no-docker
 nix:
-#	nix develop --ignore-environment --command make all
-	nix develop --ignore-environment --command make tt_gds
+	nix develop --ignore-environment --command make all
 clean:
 	git clean -dfx
 print_stats:
