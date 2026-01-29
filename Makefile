@@ -11,10 +11,11 @@ tt_test: generate_verilog tt_test_only
 tt_docs: generate_verilog
 	$(TT_TOOL) --create-pdf
 tt_gds:
-	$(TT_TOOL) --create-user-config --ihp
-	$(TT_TOOL) --harden --ihp
+	$(TT_TOOL) --create-user-config --ihp --no-docker
+	$(TT_TOOL) --harden --ihp --no-docker
 nix:
-	nix develop --ignore-environment --command make all
+#	nix develop --ignore-environment --command make all
+	nix develop --ignore-environment --command make tt_gds
 clean:
 	git clean -dfx
 print_stats:

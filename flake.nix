@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/5d78ec6766f99525b239b5c005972044aa4dae34";
+    nixpkgs.url = "github:NixOS/nixpkgs";
     alejandra.url = "github:kamadorueda/alejandra/4.0.0";
   };
 
