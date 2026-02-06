@@ -36,9 +36,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package borg
 
-import chisel3._
+import chisel3.*
 import chisel3.util.Fill
-import consts._
+import consts.*
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------

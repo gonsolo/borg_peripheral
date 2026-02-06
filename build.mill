@@ -30,10 +30,8 @@ trait BorgModule extends ScalaModule {
     )
   }
 
-  // The test sub-module
   object test extends ScalaTests with TestModule.Utest {
     
-    // In Mill 1.0.6, we use forkEnv to pass the project root to the test sandbox
     override def forkEnv = super.forkEnv() ++ Map(
       "PROJECT_ROOT" -> BuildCtx.workspaceRoot.toString()
     )
@@ -48,5 +46,4 @@ trait BorgModule extends ScalaModule {
   }
 }
 
-// Concrete instance of the module
 object borg extends BorgModule

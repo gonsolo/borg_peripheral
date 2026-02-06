@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package borg
 
-import chisel3._
+import chisel3.*
 
 object rawFloatFromFN {
   def apply(expWidth: Int, sigWidth: Int, in: Bits) = {

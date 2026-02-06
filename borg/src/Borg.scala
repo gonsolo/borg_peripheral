@@ -3,7 +3,7 @@
 
 package borg
 
-import chisel3._
+import chisel3.*
 import chisel3.util.MuxLookup
 
 class BorgIO extends Bundle {

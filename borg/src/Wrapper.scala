@@ -1,6 +1,6 @@
 package borg
 
-import chisel3._
+import chisel3.*
 import chisel3.util.log2Up
 
 class FNFromRecFNWrapperIO(inputWidth: UInt, outputWidth: UInt) extends Bundle {
