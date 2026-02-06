@@ -25,7 +25,8 @@ trait BorgModule extends ScalaModule {
       "-feature",
       "-language:reflectiveCalls",
       "-deprecation",
-      "-Xcheckinit"
+      "-Xcheckinit",
+      "-Xsource:3"
     )
   }
 

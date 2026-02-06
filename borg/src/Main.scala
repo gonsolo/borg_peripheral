@@ -1,6 +1,6 @@
 // Copyright Andreas Wendleder 2025
 // CERN-OHL-S-2.0
-  
+
 package borg
 
 import chisel3.RawModule

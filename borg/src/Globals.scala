@@ -8,4 +8,3 @@ object Globals {
   val expWidth = 8
   val sigWidth = 24 // including implicit 1
 }
-
