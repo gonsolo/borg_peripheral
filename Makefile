@@ -1,14 +1,18 @@
-TT_TOOL=python tt/tt_tool.py
-NIX=nix develop --ignore-environment --command
-BORG_TEST=mill --no-server borg.test
+TT_TOOL   = python tt/tt_tool.py
+NIX       = nix develop --ignore-environment --command
+MILL      = mill --no-server
+BORG_TEST = $(MILL) borg.test
+BORG_RUN  = $(MILL) borg.run
 
 all: arch_borg_test tt_test tt_docs tt_gds
 arch_borg_test:
 	$(BORG_TEST)
 nix_borg_test:
 	$(NIX) $(BORG_TEST)
-generate_verilog:
-	mill borg.run
+arch_generate_verilog:
+	$(BORG_RUN)
+nix_generate_verilog:
+	$(NIX) $(BORG_RUN)
 tt_test_only:
 	make -C test
 tt_test: generate_verilog tt_test_only
@@ -23,5 +27,8 @@ clean:
 	git clean -dfx
 print_stats:
 	./tt/tt_tool.py --print-stats
-.PHONY: all borg_test clean docs generate_verilog just_test nix print_stats test tt_docs tt_gds \
-	tt_test tt_test_only
+.PHONY: all \
+	arch_borg_test arch_generate_verilog \
+	clean docs just_test \
+	nix nix_borg_test nix_generate_verilog \
+	print_stats test tt_docs tt_gds tt_test tt_test_only
