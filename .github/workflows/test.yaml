@@ -29,7 +29,7 @@ jobs:
         shell: bash
         env:
           MILL_NO_SERVER: "true"
-        run: make generate_verilog
+        run: make arch_generate_verilog
 
       # Set Python up and install cocotb
       - name: Setup python
