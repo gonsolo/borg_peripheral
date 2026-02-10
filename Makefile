@@ -1,6 +1,6 @@
-TT_TOOL            := python tt/tt_tool.py
-NIX                := nix develop --ignore-environment --command
 MILL               := mill --no-server
+NIX                := nix develop --ignore-environment --command
+TT_TOOL            := python tt/tt_tool.py
 BORG_TEST          := $(MILL) borg.test
 BORG_RUN           := $(MILL) borg.run
 TEST               := make -C test
