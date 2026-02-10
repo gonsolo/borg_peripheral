@@ -36,35 +36,30 @@ object BorgTests extends TestSuite {
   }
 
   def runBasicMathTest(borg: Borg, a: Float, b: Float, epsilon: Float): Unit = {
+    // 1. Load operands into registers 0 and 1
     writeAddr(borg, 0, floatToBits(a))
     writeAddr(borg, 4, floatToBits(b))
 
+    // 2. Setup Addition Instruction
+    // rs1 = reg0, rs2 = reg1, funct7 = 0x00 (Add)
     val add_instr = (0x00 << 25) | (1 << 20) | (0 << 15)
     writeAddr(borg, 60, BigInt(add_instr))
 
+    // 3. Wait for Hardware Pipeline
     while (!borg.io.data_ready.peek().litToBoolean) {
       borg.clock.step(1)
     }
+    
+    // 4. Read result from math_result register (addr 8)
     val addActual = readAddr(borg, 8)
-
-    val mul_instr = (0x08 << 25) | (1 << 20) | (0 << 15)
-    writeAddr(borg, 60, BigInt(mul_instr))
-
-    while (!borg.io.data_ready.peek().litToBoolean) {
-      borg.clock.step(1)
-    }
-    val mulActual = readAddr(borg, 8)
-
     val expectedSum = a + b
-    val expectedMul = a * b
 
-    // 4. Report results to console
+    // 5. Report results to console
     println(
-      f"Check: $a%8.2f op $b%8.2f -> Add: $addActual%8.2f (Exp: $expectedSum%8.2f), Mul: $mulActual%8.2f (Exp: $expectedMul%8.2f)"
+      f"Check: $a%8.2f + $b%8.2f -> Actual: $addActual%8.2f (Exp: $expectedSum%8.2f)"
     )
 
     utest.assert(math.abs(addActual - expectedSum) < epsilon)
-    utest.assert(math.abs(mulActual - expectedMul) < epsilon)
   }
 
   val tests = Tests {
@@ -80,7 +75,7 @@ object BorgTests extends TestSuite {
         data("pairs").arr.map(p => (p(0).num.toFloat, p(1).num.toFloat))
 
       simulate(new Borg) { borg =>
-        println("\n--- Starting Programmable Math Batch ---")
+        println("\n--- Starting Programmable Adder Batch ---")
         pairs.foreach { case (a, b) =>
           runBasicMathTest(borg, a, b, epsilon)
         }

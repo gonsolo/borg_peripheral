@@ -50,6 +50,7 @@ class Borg extends Module {
   val recA = recFNFromFN(8, 24, rf(rs1_idx))
   val recB = recFNFromFN(8, 24, rf(rs2_idx))
 
+  // --- Simplified Math: Adder Only ---
   val f_add = Module(new AddRecFN(8, 24))
   f_add.io.subOp := false.B
   f_add.io.a := recA
@@ -57,25 +58,16 @@ class Borg extends Module {
   f_add.io.roundingMode := 0.U
   f_add.io.detectTininess := 1.U
 
-  val f_mul = Module(new MulRecFN(8, 24))
-  f_mul.io.a := recA
-  f_mul.io.b := recB
-  f_mul.io.roundingMode := 0.U
-  f_mul.io.detectTininess := 1.U
-
-  // --- Optimization 1: Multi-Stage Pipeline ---
-  // Intermediate register to hold the Recoded result (33 bits)
+  // --- Optimization: Multi-Stage Pipeline ---
   val stage1_math_rec = Reg(UInt(33.W))
   val math_result_reg = RegInit(0.U(32.W))
 
-  // Stage 1: Selection (Cycle 2 of 4)
-  // This captures the output of Add/Mul before the expensive fNFromRecFN conversion
+  // Stage 1: Capture (Cycle 2 of 4)
   when(busy_counter === 2.U) {
-    stage1_math_rec := Mux(funct7 === 0x08.U, f_mul.io.out, f_add.io.out)
+    stage1_math_rec := f_add.io.out
   }
 
   // Stage 2: Final Conversion (Cycle 1 of 4)
-  // This captures the final IEEE-754 bits
   when(busy_counter === 1.U) {
     math_result_reg := fNFromRecFN(8, 24, stage1_math_rec)
   }

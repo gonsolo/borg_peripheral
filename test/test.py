@@ -28,10 +28,10 @@ def load_test_data():
 class BorgDriver:
     def __init__(self, tqv):
         self.tqv = tqv
-        # Address Map matches the unified Borg.scala
+        # Address Map matches the simplified Borg.scala
         self.ADDR_A = 0
         self.ADDR_B = 4
-        self.ADDR_RESULT = 8  # Unified result port (former ADDR_ADD)
+        self.ADDR_RESULT = 8  
         self.ADDR_INSTR = 60
 
     async def write_reg(self, reg_idx, val_float):
@@ -43,6 +43,7 @@ class BorgDriver:
         await self.tqv.write_word_reg(self.ADDR_INSTR, instr_bits)
 
     async def read_result(self):
+        # read_word_reg handles the polling of data_ready internally
         bits = await self.tqv.read_word_reg(self.ADDR_RESULT)
         return bits_to_float(bits)
 
@@ -59,24 +60,20 @@ async def run_basic_math_test(dut, driver, a, b, epsilon):
     await driver.write_reg(1, b_32)
 
     # 2. Execute ADD: funct7=0x00, rs2=1, rs1=0
+    # In the current Borg.scala, any instr with busy_counter triggers the adder
     instr_add = (0x00 << 25) | (1 << 20) | (0 << 15)
     await driver.write_instr(instr_add)
+    
+    # 3. Read Result (Wait for 4-cycle pipeline)
     add_res = await driver.read_result()
-
-    # 3. Execute MUL: funct7=0x08, rs2=1, rs1=0
-    instr_mul = (0x08 << 25) | (1 << 20) | (0 << 15)
-    await driver.write_instr(instr_mul)
-    mul_res = await driver.read_result()
 
     # 4. Assertions
     expected_add = a_32 + b_32
-    expected_mul = a_32 * b_32
 
-    assert abs(add_res - expected_add) < epsilon, f"Add failed: {a_32}+{b_32}={add_res}"
-    assert abs(mul_res - expected_mul) < epsilon, f"Mul failed: {a_32}*{b_32}={mul_res}"
+    assert abs(add_res - expected_add) < epsilon, f"Add failed: {a_32}+{b_32}={add_res} (Exp: {expected_add})"
 
     dut._log.info(
-        f"Checked: {a_32:8.2f} & {b_32:8.2f} -> Add: {add_res:8.2f}, Mul: {mul_res:8.2f}"
+        f"Checked Adder: {a_32:8.2f} + {b_32:8.2f} -> Result: {add_res:8.2f}"
     )
 
 
@@ -85,7 +82,7 @@ PERIPHERAL_NUM = 39
 
 @cocotb.test()
 async def test_borg_vulkan_style_math(dut):
-    dut._log.info("Starting Single-Port Programmable Borg Test")
+    dut._log.info("Starting Single-Port Programmable Borg Adder Test")
 
     test_data = load_test_data()
     epsilon = test_data["epsilon"]
@@ -100,4 +97,4 @@ async def test_borg_vulkan_style_math(dut):
     for a, b in test_data["pairs"]:
         await run_basic_math_test(dut, driver, a, b, epsilon)
 
-    dut._log.info("All Single-Port Borg Tests Passed!")
+    dut._log.info("All Borg Adder Tests Passed!")
