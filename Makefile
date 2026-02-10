@@ -1,8 +1,12 @@
 TT_TOOL=python tt/tt_tool.py
+NIX=nix develop --ignore-environment --command
+BORG_TEST=mill --no-server borg.test
 
-all: borg_test tt_test tt_docs tt_gds
-borg_test:
-	mill borg.test
+all: arch_borg_test tt_test tt_docs tt_gds
+arch_borg_test:
+	$(BORG_TEST)
+nix_borg_test:
+	$(NIX) $(BORG_TEST)
 generate_verilog:
 	mill borg.run
 tt_test_only:
@@ -14,7 +18,7 @@ tt_gds:
 	$(TT_TOOL) --create-user-config --ihp --no-docker
 	$(TT_TOOL) --harden --ihp --no-docker
 nix:
-	nix develop --ignore-environment --command make all
+	$(NIX) make all
 clean:
 	git clean -dfx
 print_stats:
