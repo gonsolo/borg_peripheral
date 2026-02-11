@@ -1,5 +1,4 @@
 //| mill-version: 1.1.2
-
 import mill._
 import mill.scalalib._
 import mill.api.BuildCtx
@@ -31,10 +30,12 @@ trait BorgModule extends ScalaModule {
   }
 
   object test extends ScalaTests with TestModule.Utest {
-    
-    override def forkEnv = super.forkEnv() ++ Map(
-      "PROJECT_ROOT" -> BuildCtx.workspaceRoot.toString()
-    )
+
+    override def forkEnv = Task {
+      super.forkEnv() ++ Map(
+        "PROJECT_ROOT" -> BuildCtx.workspaceRoot.toString()
+      )
+    }
 
     override def mvnDeps = Task {
       super.mvnDeps() ++ Seq(
