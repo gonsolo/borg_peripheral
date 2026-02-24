@@ -30,31 +30,46 @@ object BorgTests extends TestSuite {
 
   def readAddr(borg: Borg, addr: Int): Float = {
     borg.io.address.poke(addr.U)
-    val res = bitsToFloat(borg.io.data_out.peek().litValue)
-    borg.clock.step(1)
-    res
+    bitsToFloat(borg.io.data_out.peek().litValue)
   }
 
   def runBasicMathTest(borg: Borg, a: Float, b: Float, epsilon: Float): Unit = {
-    // 1. Load operands into registers 0 and 1
+    // 1. Reset PC and stop execution
+    writeAddr(borg, 60, 2) // Bit 1 = Reset PC
+
+    // 2. Load operands into registers 0 and 1
     writeAddr(borg, 0, floatToBits(a))
     writeAddr(borg, 4, floatToBits(b))
 
-    // 2. Setup Addition Instruction
-    // rs1 = reg0, rs2 = reg1, funct7 = 0x00 (Add)
-    val add_instr = (0x00 << 25) | (1 << 20) | (0 << 15)
-    writeAddr(borg, 60, BigInt(add_instr))
+    // 3. Setup Addition Instruction in imem(0)
+    // opcode/funct7 = 0x00 (Add), rs1 = reg0, rs2 = reg1, rd = reg2
+    // RISC-V like format: funct7(7) | rs2(5) | rs1(5) | funct3(3) | rd(5) | opcode(7)
+    // We only use funct7, rs2, rs1, rd.
+    val rd = 2
+    val rs1 = 0
+    val rs2 = 1
+    val add_instr = (0x00 << 25) | (rs2 << 20) | (rs1 << 15) | (rd << 7)
+    writeAddr(borg, 32, BigInt(add_instr)) // imem(0)
 
-    // 3. Wait for Hardware Pipeline
-    while (!borg.io.data_ready.peek().litToBoolean) {
+    // Halt instruction (zero) in imem(1)
+    writeAddr(borg, 36, 0)
+
+    // 4. Start execution
+    writeAddr(borg, 60, 1) // Bit 0 = Start
+
+    // 5. Wait for Halted bit (status address 16, bit 1)
+    var status: BigInt = 0
+    do {
+      borg.io.address.poke(16.U)
+      status = borg.io.data_out.peek().litValue
       borg.clock.step(1)
-    }
-    
-    // 4. Read result from math_result register (addr 8)
+    } while ((status & 2) == 0)
+
+    // 6. Read result from rf(2) (addr 8)
     val addActual = readAddr(borg, 8)
     val expectedSum = a + b
 
-    // 5. Report results to console
+    // 7. Report results to console
     println(
       f"Check: $a%8.2f + $b%8.2f -> Actual: $addActual%8.2f (Exp: $expectedSum%8.2f)"
     )
