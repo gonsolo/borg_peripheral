@@ -22,15 +22,21 @@ object BorgTests extends TestSuite {
   def writeAddr(borg: Borg, addr: Int, bits: BigInt): Unit = {
     borg.io.address.poke(addr.U)
     borg.io.data_in.poke(bits.U)
-    borg.io.data_write_n.poke("b10".U)
+    borg.io.data_write_n.poke(2.U)
+    borg.io.data_read_n.poke(3.U)
     borg.clock.step(1)
-    borg.io.data_write_n.poke("b11".U)
+    borg.io.data_write_n.poke(3.U)
     borg.clock.step(1)
   }
 
   def readAddr(borg: Borg, addr: Int): Float = {
     borg.io.address.poke(addr.U)
-    bitsToFloat(borg.io.data_out.peek().litValue)
+    borg.io.data_read_n.poke(2.U)
+    borg.io.data_write_n.poke(3.U)
+    borg.clock.step(1)
+    val res = bitsToFloat(borg.io.data_out.peek().litValue)
+    borg.io.data_read_n.poke(3.U)
+    res
   }
 
   def runBasicMathTest(borg: Borg, a: Float, b: Float, epsilon: Float): Unit = {
@@ -61,13 +67,24 @@ object BorgTests extends TestSuite {
     var status: BigInt = 0
     do {
       borg.io.address.poke(16.U)
-      status = borg.io.data_out.peek().litValue
+      borg.io.data_read_n.poke(2.U)
+      borg.io.data_write_n.poke(3.U)
       borg.clock.step(1)
+      status = borg.io.data_out.peek().litValue
     } while ((status & 2) == 0)
+    borg.io.data_read_n.poke(3.U)
 
     // 6. Read result from rf(2) (addr 8)
     val addActual = readAddr(borg, 8)
     val expectedSum = a + b
+
+    val r0_val = readAddr(borg, 0)
+    val r1_val = readAddr(borg, 4)
+    val r2_val = readAddr(borg, 8)
+    val r3_val = readAddr(borg, 12)
+    println(
+      f"Debug Registers -> rf0: $r0_val%8.2f, rf1: $r1_val%8.2f, rf2: $r2_val%8.2f, rf3: $r3_val%8.2f"
+    )
 
     // 7. Report results to console
     println(
