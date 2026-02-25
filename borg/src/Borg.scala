@@ -34,14 +34,11 @@ class Borg extends Module {
   // registerFile: 4 general-purpose 32-bit registers for floating-point data
   val registerFile = SyncReadMem(4, UInt(32.W))
 
-  // instructionMemory: 8 words of instruction memory to store the shader program
-  val instructionMemory = SyncReadMem(8, UInt(32.W))
+  // instructionMemory: 4 words of instruction memory to store the shader program
+  val instructionMemory = SyncReadMem(4, UInt(32.W))
 
   // programCounter: Points to the current instruction in instructionMemory
   val programCounter = RegInit(0.U(3.W))
-
-  // currentInstruction: The instruction currently being decoded/executed
-  val currentInstruction = RegInit(0.U(32.W))
 
   // running: Status flag indicating if the processor is currently executing a program
   val running = RegInit(false.B)
@@ -53,8 +50,7 @@ class Borg extends Module {
   val is_writing = io.data_write_n === 2.U
   val is_reading = io.data_read_n === 2.U
 
-  // --- Multi-Stage Pipeline Registers ---
-  val stage1_math_rec = RegInit(0.U(33.W))
+  // --- Stage Variables (Combinational) ---
 
   // --- Instruction Memory Read Logic (1-Cycle Latency) ---
   val nextPC =
@@ -66,7 +62,6 @@ class Borg extends Module {
     when(fetchedInstruction === 0.U) {
       running := false.B
     }.otherwise {
-      currentInstruction := fetchedInstruction
       busy_counter := 4.U
     }
   }.elsewhen(is_busy) {
@@ -83,26 +78,23 @@ class Borg extends Module {
       programCounter := 0.U
       running := false.B
       busy_counter := 0.U
-      currentInstruction := 0.U
-      stage1_math_rec := 0.U
     }
   }
 
   // --- Instruction Pre-Fetch ---
-  val decodeInst = Mux(is_busy, currentInstruction, fetchedInstruction)
-  val rs1_idx = decodeInst(19, 15)(1, 0)
-  val rs2_idx = decodeInst(24, 20)(1, 0)
-  val rd_idx = currentInstruction(11, 7)(1, 0)
+  val rs1_idx = fetchedInstruction(19, 15)(1, 0)
+  val rs2_idx = fetchedInstruction(24, 20)(1, 0)
+  val rd_idx = fetchedInstruction(11, 7)(1, 0)
 
   // --- Register File State Access ---
   // Port A: Pipeline RS1 (Word index 0-3)
-  val rs1_en = (running && !is_busy) || (is_busy && busy_counter >= 3.U)
+  val rs1_en = (running && !is_busy) || (is_busy && busy_counter >= 2.U)
   val rs1_en_del = RegNext(rs1_en, false.B)
   val recA_raw_in = registerFile.read(rs1_idx, rs1_en)
   val recA_raw = Mux(rs1_en_del, recA_raw_in, 0.U)
 
   // Port B: Pipeline RS2
-  val rs2_en = (running && !is_busy) || (is_busy && busy_counter >= 3.U)
+  val rs2_en = (running && !is_busy) || (is_busy && busy_counter >= 2.U)
   val rs2_en_del = RegNext(rs2_en, false.B)
   val recB_raw_in = registerFile.read(rs2_idx, rs2_en)
   val recB_raw = Mux(rs2_en_del, recB_raw_in, 0.U)
@@ -123,26 +115,21 @@ class Borg extends Module {
   f_add.io.roundingMode := 0.U
   f_add.io.detectTininess := 1.U
 
-  // Pipeline Stage: Capture Result at busy_counter 2 (Cycle 3 of 4)
-  when(is_busy && busy_counter === 2.U) {
-    stage1_math_rec := f_add.io.out
-  }
-
   // Write-back: At busy_counter 1 (Cycle 4 of 4)
   val mmio_reg_write = is_writing && io.address < 16.U
   val pipe_reg_write = running && is_busy && busy_counter === 1.U
   val reg_w_en = mmio_reg_write || pipe_reg_write
   val reg_w_addr = Mux(pipe_reg_write, rd_idx, io.address(3, 2))
   val reg_w_data =
-    Mux(pipe_reg_write, fNFromRecFN(8, 24, stage1_math_rec), io.data_in)
+    Mux(pipe_reg_write, fNFromRecFN(8, 24, f_add.io.out), io.data_in)
 
   when(reg_w_en) {
     registerFile.write(reg_w_addr, reg_w_data)
   }
 
   // IMEM Write
-  when(is_writing && io.address >= 32.U && io.address < 60.U) {
-    instructionMemory.write(io.address(4, 2), io.data_in)
+  when(is_writing && io.address >= 32.U && io.address < 48.U) {
+    instructionMemory.write(io.address(3, 2), io.data_in)
   }
 
   // --- Memory-Mapped Read Logic ---
@@ -157,8 +144,7 @@ class Borg extends Module {
       4.U -> mmio_reg_data,
       8.U -> mmio_reg_data,
       12.U -> mmio_reg_data,
-      16.U -> status_reg,
-      60.U -> currentInstruction
+      16.U -> status_reg
     )
   )
 
